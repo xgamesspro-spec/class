@@ -7,6 +7,8 @@
 - **Jamais :** mardi soir (sport 19h45–21h45), jeudi et vendredi (cours au CFA)
 - ⚠️ Calendrier 2027 pas encore publié : les dates de 2026 servent de repère (dossier E6 avant le 9 avril, écrits les 19-21 mai). À ajuster dès que le CFA donne les vraies dates.
 
+**Synchro PC ↔ téléphone :** sur la page, bouton ☁️ Synchro → colle ton token GitHub (une fois par appareil). Les cases sont alors enregistrées dans `progress.json` et partagées entre tes appareils.
+
 Tu peux cocher les cases ici aussi : clique sur le crayon ✏️, remplace `[ ]` par `[x]`, puis « Commit changes ».
 
 

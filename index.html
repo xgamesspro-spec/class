@@ -43,7 +43,9 @@ h2{font-size:15px;margin:22px 4px 8px;color:var(--acc)}
     <select id="filter"><option value="">Toutes les épreuves</option></select>
     <button class="primary" id="goNow">Cette semaine</button>
     <button id="hideDone">Masquer le fait</button>
+    <button id="syncBtn">☁️ Synchro</button>
   </div>
+  <div class="stats"><span id="syncState">Synchro désactivée (cases gardées sur cet appareil)</span></div>
 </header>
 <main>
   <div class="info">
@@ -93,7 +95,7 @@ function render() {
     const row = document.createElement("label");
     row.className = "t" + (done[t.id] ? " done" : "");
     row.innerHTML = `<input type="checkbox" ${done[t.id]?"checked":""}><div><div class="txt"><span class="tag" style="background:${COLORS[t.e]||"#e5e7eb"}">${t.e}</span>${t.t}</div><div class="meta">${t.q} · ${fmtH(t.h)}</div>${t.n?`<div class="note">⚠️ ${t.n}</div>`:""}</div>`;
-    row.querySelector("input").addEventListener("change", ev => { if (ev.target.checked) done[t.id] = true; else delete done[t.id]; save(); render(); });
+    row.querySelector("input").addEventListener("change", ev => { if (ev.target.checked) done[t.id] = true; else delete done[t.id]; pending[t.id] = ev.target.checked; save(); render(); queuePush(); });
     box.appendChild(row);
   }
   const tot = TASKS.reduce((a,t) => a+t.h, 0), fait = TASKS.filter(t => done[t.id]).reduce((a,t) => a+t.h, 0);
@@ -106,6 +108,63 @@ sel.addEventListener("change", render);
 document.getElementById("hideDone").addEventListener("click", e => { hideDone = !hideDone; e.target.textContent = hideDone ? "Afficher tout" : "Masquer le fait"; render(); });
 document.getElementById("goNow").addEventListener("click", () => { const el = document.getElementById("w-" + nowWeek); if (el) el.scrollIntoView({behavior:"smooth", block:"start"}); });
 render();
+
+// ---- Synchro PC / téléphone via un fichier progress.json du dépôt GitHub ----
+const REPO = "xgamesspro-spec/class", FILE = "progress.json", TKEY = "plan-revision-token";
+const API = `https://api.github.com/repos/${REPO}/contents/${FILE}`;
+let token = null, pending = {}, timer = null, busy = false;
+try { token = localStorage.getItem(TKEY); } catch(e) {}
+const setState = s => document.getElementById("syncState").textContent = s;
+const headers = () => ({ "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" });
+
+async function fetchRemote() {
+  const r = await fetch(API + "?t=" + Date.now(), { headers: headers(), cache: "no-store" });
+  if (r.status === 404) return { data: {}, sha: null };
+  if (r.status === 401 || r.status === 403) throw new Error("token");
+  if (!r.ok) throw new Error("http " + r.status);
+  const j = await r.json();
+  return { data: JSON.parse(atob(j.content.replace(/\n/g, "")) || "{}"), sha: j.sha };
+}
+
+async function pull() {
+  if (!token || busy || Object.keys(pending).length) return;
+  setState("☁️ Récupération…");
+  try { const { data } = await fetchRemote(); done = data; save(); render(); setState("☁️ Synchronisé"); }
+  catch (e) { setState(e.message === "token" ? "⚠️ Token refusé : reclique sur ☁️ Synchro" : "⚠️ Hors ligne (sera synchronisé plus tard)"); }
+}
+
+async function push(retry = true) {
+  if (!token || busy || !Object.keys(pending).length) return;
+  busy = true; setState("☁️ Envoi…");
+  const sent = { ...pending };
+  try {
+    const { data, sha } = await fetchRemote();
+    for (const [id, v] of Object.entries(sent)) { if (v) data[id] = true; else delete data[id]; }
+    const body = { message: "Progression du plan de révision", content: btoa(JSON.stringify(data)) };
+    if (sha) body.sha = sha;
+    const r = await fetch(API, { method: "PUT", headers: headers(), body: JSON.stringify(body) });
+    if (r.status === 409 || r.status === 422) { busy = false; if (retry) return push(false); throw new Error("conflit"); }
+    if (r.status === 401 || r.status === 403) throw new Error("token");
+    if (!r.ok) throw new Error("http " + r.status);
+    for (const id of Object.keys(sent)) if (pending[id] === sent[id]) delete pending[id];
+    done = data; for (const [id, v] of Object.entries(pending)) { if (v) done[id] = true; else delete done[id]; }
+    save(); render(); setState("☁️ Synchronisé");
+  } catch (e) {
+    setState(e.message === "token" ? "⚠️ Token refusé : reclique sur ☁️ Synchro" : "⚠️ Hors ligne (réessai auto)");
+    setTimeout(() => push(), 15000);
+  } finally { busy = false; if (Object.keys(pending).length) queuePush(); }
+}
+function queuePush() { if (!token) return; clearTimeout(timer); timer = setTimeout(push, 1200); }
+
+document.getElementById("syncBtn").addEventListener("click", () => {
+  const t = prompt("Colle ton token GitHub (laisse vide pour désactiver la synchro sur cet appareil) :", "");
+  if (t === null) return;
+  token = t.trim() || null;
+  try { token ? localStorage.setItem(TKEY, token) : localStorage.removeItem(TKEY); } catch(e) {}
+  if (token) pull(); else setState("Synchro désactivée (cases gardées sur cet appareil)");
+});
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pull(); });
+if (token) pull();
 </script>
 </body>
 </html>
