@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan de révision — BTS SIO SISR 2027</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--txt:#1b1f24;--mut:#667085;--line:#e4e7ec;--acc:#2563eb;--ok:#16a34a;--now:#fff7e6}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b21;--txt:#e6e8eb;--mut:#98a2b3;--line:#2a2f37;--acc:#60a5fa;--ok:#4ade80;--now:#2a2312}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px}
+h1{font-size:17px;margin:0 0 8px}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar>div{height:100%;background:var(--ok);width:0;transition:width .3s}
+.stats{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-top:6px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+select,button{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--txt)}
+button.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:760px;margin:0 auto;padding:12px 12px 60px}
+.info{font-size:13px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+h2{font-size:15px;margin:22px 4px 8px;color:var(--acc)}
+.week{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;scroll-margin-top:160px}
+.week.now{background:var(--now);border-color:#f59e0b}
+.wh{display:flex;justify-content:space-between;padding:8px 12px;font-weight:600;font-size:14px;border-bottom:1px solid var(--line)}
+.wh small{font-weight:400;color:var(--mut)}
+.t{display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.t:last-child{border-bottom:0}
+.t input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--ok)}
+.t.done .txt{text-decoration:line-through;color:var(--mut)}
+.meta{font-size:12px;color:var(--mut);margin-top:3px}
+.note{font-size:12px;color:#b45309;margin-top:3px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;margin-right:6px;color:#111}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 Plan de révision — BTS SIO SISR 2027</h1>
+  <div class="bar"><div id="fill"></div></div>
+  <div class="stats"><span id="pct">0 %</span><span id="hrs"></span></div>
+  <div class="tools">
+    <select id="filter"><option value="">Toutes les épreuves</option></select>
+    <button class="primary" id="goNow">Cette semaine</button>
+    <button id="hideDone">Masquer le fait</button>
+  </div>
+</header>
+<main>
+  <div class="info">
+    Créneaux : <b>lundi soir</b>, <b>mercredi soir</b>, <b>samedi</b> (gros bloc), parfois <b>dimanche</b>.
+    Rien le mardi (sport 19h45–21h45), ni le jeudi et le vendredi (cours).<br>
+    ⚠️ Le calendrier 2027 n'est pas encore publié : dates de 2026 en repère (dossier E6 avant le 9 avril, écrits les 19-21 mai).<br>
+    Les cases cochées sont gardées dans ce navigateur (sur cet appareil).
+  </div>
+  <div id="list"></div>
+</main>
+<script>
+const TASKS = [{"id": 0, "w": "2026-11-30", "e": "E5", "t": "Lister tes réalisations pro et les placer dans le tableau de synthèse (Netdisco + VLAN, Wi-Fi bloc op, Snipe-IT à venir)", "h": 2, "q": "Sam", "p": "1 · Bases", "n": ""}, {"id": 1, "w": "2026-11-30", "e": "E7", "t": "Fiche bases cyber : DICP, menaces courantes, vocabulaire", "h": 1, "q": "Lun soir", "p": "1 · Bases", "n": ""}, {"id": 2, "w": "2026-11-30", "e": "E4", "t": "Relire cours CEJM : droit du numérique, RGPD", "h": 1, "q": "Mer soir", "p": "1 · Bases", "n": ""}, {"id": 3, "w": "2026-12-07", "e": "E6", "t": "Labo : VM Debian + réinstaller Netdisco SEUL avec tes notes", "h": 3, "q": "Sam", "p": "1 · Bases", "n": "Note chaque commande qui te bloque"}, {"id": 4, "w": "2026-12-07", "e": "E3", "t": "Numération (binaire, hexa) + logique booléenne : exos", "h": 1, "q": "Lun soir", "p": "1 · Bases", "n": ""}, {"id": 5, "w": "2026-12-07", "e": "E1", "t": "Lire 1 doc du thème « Le vrai du faux » + fiche", "h": 1, "q": "Mer soir", "p": "1 · Bases", "n": ""}, {"id": 6, "w": "2026-12-14", "e": "E6", "t": "Maquette 3 VLAN + routage inter-VLAN (Packet Tracer ou GNS3)", "h": 3, "q": "Sam", "p": "1 · Bases", "n": ""}, {"id": 7, "w": "2026-12-14", "e": "E7", "t": "Fiche RGPD + PIA CNIL (appuie-toi sur ton cas réel au boulot)", "h": 1, "q": "Lun soir", "p": "1 · Bases", "n": ""}, {"id": 8, "w": "2026-12-14", "e": "E2", "t": "Vocabulaire tech anglais + 1 vidéo tech en VO", "h": 1, "q": "Mer soir", "p": "1 · Bases", "n": ""}, {"id": 9, "w": "2026-12-21", "e": "Rattrapage", "t": "Finir ce qui a pris du retard", "h": 2, "q": "Sam", "p": "1 · Bases", "n": "Semaine de fêtes : reste léger"}, {"id": 10, "w": "2026-12-28", "e": "E3", "t": "Ensembles, relations, graphes : exos", "h": 1.5, "q": "Lun soir", "p": "1 · Bases", "n": ""}, {"id": 11, "w": "2026-12-28", "e": "E1", "t": "2e fiche thème « Le vrai du faux »", "h": 1, "q": "Dim", "p": "1 · Bases", "n": ""}, {"id": 12, "w": "2027-01-04", "e": "E6", "t": "Installer Snipe-IT sur VM labo, documenter chaque étape (captures)", "h": 3, "q": "Sam", "p": "2 · Technique", "n": "Ta 3e réalisation pro"}, {"id": 13, "w": "2027-01-04", "e": "E4", "t": "1 cas d'annale CEJM", "h": 1.5, "q": "Dim", "p": "2 · Technique", "n": ""}, {"id": 14, "w": "2027-01-04", "e": "E7", "t": "Fiche sécurisation switch : port-security, 802.1X, SSH", "h": 1, "q": "Lun soir", "p": "2 · Technique", "n": ""}, {"id": 15, "w": "2027-01-11", "e": "E7", "t": "Annale E7 n°1 en 4h chrono + correction", "h": 4, "q": "Sam", "p": "2 · Technique", "n": ""}, {"id": 16, "w": "2027-01-11", "e": "E6", "t": "Rédiger la fiche réalisation pro Snipe-IT", "h": 1, "q": "Mer soir", "p": "2 · Technique", "n": ""}, {"id": 17, "w": "2027-01-18", "e": "E6", "t": "Générateur de parc fictif + import dans GLPI / Netdisco", "h": 3, "q": "Sam", "p": "2 · Technique", "n": "Données fictives obligatoires (demande du tuteur)"}, {"id": 18, "w": "2027-01-18", "e": "E3", "t": "Algorithmique : boucles, conditions, fonctions", "h": 1, "q": "Lun soir", "p": "2 · Technique", "n": ""}, {"id": 19, "w": "2027-01-18", "e": "E2", "t": "Compte rendu écrit en anglais d'une intervention", "h": 1, "q": "Mer soir", "p": "2 · Technique", "n": ""}, {"id": 20, "w": "2027-01-25", "e": "E5", "t": "Fiche réalisation Netdisco + VLAN (données fictives)", "h": 2, "q": "Sam", "p": "2 · Technique", "n": ""}, {"id": 21, "w": "2027-01-25", "e": "E7", "t": "Fiche sauvegarde 3-2-1, PCA/PRA, SLA", "h": 1, "q": "Lun soir", "p": "2 · Technique", "n": ""}, {"id": 22, "w": "2027-01-25", "e": "E1", "t": "Synthèse : 1 sujet, faire juste le plan", "h": 1, "q": "Mer soir", "p": "2 · Technique", "n": ""}, {"id": 23, "w": "2027-02-01", "e": "E4", "t": "Annale CEJM n°1 en 4h chrono", "h": 4, "q": "Sam", "p": "2 · Technique", "n": ""}, {"id": 24, "w": "2027-02-01", "e": "E5", "t": "Fiche réalisation Wi-Fi bloc opératoire (anonymisée)", "h": 1, "q": "Lun soir", "p": "2 · Technique", "n": ""}, {"id": 25, "w": "2027-02-08", "e": "E6", "t": "Test : refaire Netdisco + Snipe-IT de zéro sans aide, chrono", "h": 3, "q": "Sam", "p": "2 · Technique", "n": "Note où tu bloques → à retravailler"}, {"id": 26, "w": "2027-02-08", "e": "E3", "t": "Arithmétique + matrices : exos", "h": 1, "q": "Lun soir", "p": "2 · Technique", "n": ""}, {"id": 27, "w": "2027-02-08", "e": "E2", "t": "Préparer la présentation orale d'un projet en anglais (5 min)", "h": 1, "q": "Mer soir", "p": "2 · Technique", "n": ""}, {"id": 28, "w": "2027-02-15", "e": "E5", "t": "Mettre à jour le portfolio web + vérifier que tous les blocs de compétences sont couverts", "h": 3, "q": "Sam", "p": "3 · Dossiers & annales", "n": ""}, {"id": 29, "w": "2027-02-22", "e": "E1", "t": "Annale E1 complète en conditions", "h": 3, "q": "Sam", "p": "3 · Dossiers & annales", "n": ""}, {"id": 30, "w": "2027-02-22", "e": "E7", "t": "Relire fiches E7 + lister tes points faibles", "h": 1, "q": "Lun soir", "p": "3 · Dossiers & annales", "n": ""}, {"id": 31, "w": "2027-02-22", "e": "E3", "t": "Exos type examen", "h": 1, "q": "Mer soir", "p": "3 · Dossiers & annales", "n": ""}, {"id": 32, "w": "2027-03-01", "e": "E6", "t": "Assembler le dossier E6 : page de garde, fiches, attestations", "h": 3, "q": "Sam", "p": "3 · Dossiers & annales", "n": ""}, {"id": 33, "w": "2027-03-01", "e": "E2", "t": "T'enregistrer en présentation anglais et réécouter", "h": 1, "q": "Mer soir", "p": "3 · Dossiers & annales", "n": ""}, {"id": 34, "w": "2027-03-08", "e": "E7", "t": "Annale E7 n°2 en 4h chrono", "h": 4, "q": "Sam", "p": "3 · Dossiers & annales", "n": ""}, {"id": 35, "w": "2027-03-08", "e": "E5", "t": "Faire relire le dossier E5 par ton tuteur ou un prof", "h": 1, "q": "Lun soir", "p": "3 · Dossiers & annales", "n": ""}, {"id": 36, "w": "2027-03-15", "e": "E4", "t": "Annale CEJM n°2 en 4h chrono", "h": 4, "q": "Sam", "p": "3 · Dossiers & annales", "n": ""}, {"id": 37, "w": "2027-03-15", "e": "E6", "t": "Corriger le dossier E6 après relecture", "h": 1, "q": "Mer soir", "p": "3 · Dossiers & annales", "n": ""}, {"id": 38, "w": "2027-03-22", "e": "E5/E6", "t": "Vérif conformité finale des dossiers", "h": 2, "q": "Sam", "p": "3 · Dossiers & annales", "n": "Dossier non conforme = « non valide », pas d'oral"}, {"id": 39, "w": "2027-03-22", "e": "E1", "t": "Relire les fiches du thème", "h": 1, "q": "Lun soir", "p": "3 · Dossiers & annales", "n": ""}, {"id": 40, "w": "2027-03-29", "e": "E5/E6", "t": "Déposer les dossiers", "h": 1, "q": "Lun soir", "p": "3 · Dossiers & annales", "n": "Vérifie la date limite (en 2026 : 9 avril)"}, {"id": 41, "w": "2027-03-29", "e": "E3", "t": "Révision formules + exos rapides", "h": 1, "q": "Mer soir", "p": "3 · Dossiers & annales", "n": ""}, {"id": 42, "w": "2027-04-05", "e": "E5", "t": "Oral blanc 40 min devant un collègue ou un prof", "h": 2, "q": "Sam", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 43, "w": "2027-04-05", "e": "E6", "t": "Répéter une manip avec 1h30 de préparation", "h": 3, "q": "Dim", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 44, "w": "2027-04-12", "e": "E6", "t": "Oral blanc E6 + questions type jury", "h": 2, "q": "Sam", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 45, "w": "2027-04-12", "e": "E2", "t": "Oral blanc anglais", "h": 1, "q": "Mer soir", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 46, "w": "2027-04-19", "e": "E7", "t": "Annale E7 n°3", "h": 4, "q": "Sam", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 47, "w": "2027-04-19", "e": "E4", "t": "Relecture fiches CEJM", "h": 1, "q": "Lun soir", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 48, "w": "2027-04-26", "e": "E1", "t": "Annale E1 n°2", "h": 3, "q": "Sam", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 49, "w": "2027-04-26", "e": "E3", "t": "Dernière série d'exos", "h": 1, "q": "Mer soir", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 50, "w": "2027-05-03", "e": "E4/E7", "t": "Révision des fiches pour les écrits", "h": 3, "q": "Sam", "p": "4 · Oraux & sprint final", "n": ""}, {"id": 51, "w": "2027-05-10", "e": "Tous", "t": "Révision légère, convocation + matériel prêts, dormir", "h": 1, "q": "Lun soir", "p": "4 · Oraux & sprint final", "n": "Écrits mi-mai (en 2026 : 19-21 mai)"}];
+const COLORS = {E1:"#fca5a5",E2:"#fdba74",E3:"#fde047",E4:"#86efac",E5:"#5eead4",E6:"#93c5fd",E7:"#c4b5fd","E5/E6":"#bfdbfe","E4/E7":"#f0abfc",Rattrapage:"#d1d5db",Tous:"#e5e7eb"};
+const KEY = "plan-revision-bts-2027";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e) {}
+let hideDone = false;
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch(e) {} };
+const mois = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+const fr = s => { const [y,m,d] = s.split("-").map(Number); return d+" "+mois[m-1]+" "+y; };
+const fmtH = h => String(h).replace(".", ",") + " h";
+
+// semaine en cours
+const today = new Date(); today.setHours(0,0,0,0);
+const weeks = [...new Set(TASKS.map(t => t.w))];
+let nowWeek = null;
+for (const w of weeks) { const d = new Date(w+"T00:00:00"); const end = new Date(d); end.setDate(d.getDate()+7); if (today >= d && today < end) nowWeek = w; }
+if (!nowWeek && today < new Date(weeks[0]+"T00:00:00")) nowWeek = weeks[0];
+
+const sel = document.getElementById("filter");
+[...new Set(TASKS.map(t => t.e))].forEach(e => sel.add(new Option(e, e)));
+
+function render() {
+  const f = sel.value, list = document.getElementById("list");
+  list.innerHTML = "";
+  let curP = null, box = null, curW = null;
+  for (const t of TASKS) {
+    if (f && t.e !== f && t.e !== "Tous") continue;
+    if (hideDone && done[t.id]) continue;
+    if (t.p !== curP) { curP = t.p; const h = document.createElement("h2"); h.textContent = "Phase " + t.p; list.appendChild(h); curW = null; }
+    if (t.w !== curW) {
+      curW = t.w; box = document.createElement("div"); box.className = "week" + (t.w === nowWeek ? " now" : ""); box.id = "w-" + t.w;
+      const wt = TASKS.filter(x => x.w === t.w), wd = wt.filter(x => done[x.id]).length;
+      box.innerHTML = `<div class="wh">Semaine du ${fr(t.w)}${t.w===nowWeek?" · 📍 maintenant":""}<small>${wd}/${wt.length}</small></div>`;
+      list.appendChild(box);
+    }
+    const row = document.createElement("label");
+    row.className = "t" + (done[t.id] ? " done" : "");
+    row.innerHTML = `<input type="checkbox" ${done[t.id]?"checked":""}><div><div class="txt"><span class="tag" style="background:${COLORS[t.e]||"#e5e7eb"}">${t.e}</span>${t.t}</div><div class="meta">${t.q} · ${fmtH(t.h)}</div>${t.n?`<div class="note">⚠️ ${t.n}</div>`:""}</div>`;
+    row.querySelector("input").addEventListener("change", ev => { if (ev.target.checked) done[t.id] = true; else delete done[t.id]; save(); render(); });
+    box.appendChild(row);
+  }
+  const tot = TASKS.reduce((a,t) => a+t.h, 0), fait = TASKS.filter(t => done[t.id]).reduce((a,t) => a+t.h, 0);
+  const pct = tot ? Math.round(fait/tot*100) : 0;
+  document.getElementById("fill").style.width = pct + "%";
+  document.getElementById("pct").textContent = pct + " % fait";
+  document.getElementById("hrs").textContent = fmtH(fait) + " / " + fmtH(tot);
+}
+sel.addEventListener("change", render);
+document.getElementById("hideDone").addEventListener("click", e => { hideDone = !hideDone; e.target.textContent = hideDone ? "Afficher tout" : "Masquer le fait"; render(); });
+document.getElementById("goNow").addEventListener("click", () => { const el = document.getElementById("w-" + nowWeek); if (el) el.scrollIntoView({behavior:"smooth", block:"start"}); });
+render();
+</script>
+</body>
+</html>
